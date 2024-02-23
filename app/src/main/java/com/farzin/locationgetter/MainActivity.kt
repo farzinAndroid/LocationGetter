@@ -1,0 +1,152 @@
+package com.farzin.locationgetter
+
+import android.Manifest
+import android.app.Activity
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Bundle
+import android.util.Log
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.core.app.ActivityCompat
+import com.farzin.locationgetter.ui.screen.MainScreen
+import com.farzin.locationgetter.ui.theme.LocationGetterTheme
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
+import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
+import dagger.hilt.android.AndroidEntryPoint
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+
+@AndroidEntryPoint
+class MainActivity: ComponentActivity() {
+
+    @Inject
+    lateinit var locationRequest: LocationRequest
+
+    private var locationPermissionGranted by mutableStateOf(false)
+    private var notificationPermissionGranted by mutableStateOf(false)
+    private var locationSettingsEnabled by mutableStateOf(false)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            LocationGetterTheme {
+                // A surface container using the 'background' color from the theme
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    checkLocationPermission()
+                    checkNotificationPermission()
+                    checkIfLocationIsEnabled()
+
+
+                    MainScreen(
+                        isLocationPermissionGranted = locationPermissionGranted,
+                        isLocationSettingsGranted = locationSettingsEnabled,
+                        isNotificationPermissionGranted = notificationPermissionGranted
+                    )
+                }
+            }
+        }
+    }
+
+    private val locationSettingsLauncher =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                locationSettingsEnabled = true
+            }
+        }
+
+    private fun checkIfLocationIsEnabled() {
+        val locationRequest = LocationSettingsRequest.Builder()
+            .addLocationRequest(locationRequest)
+            .build()
+
+        val settingClient = LocationServices.getSettingsClient(this)
+        val locationSettingsResponseTask = settingClient.checkLocationSettings(locationRequest)
+
+        locationSettingsResponseTask.addOnSuccessListener {
+            locationSettingsEnabled = true
+        }
+
+        locationSettingsResponseTask.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException) {
+                try {
+
+                    val intentSenderRequest =
+                        IntentSenderRequest.Builder(exception.resolution).build()
+
+                    locationSettingsLauncher.launch(intentSenderRequest)
+
+
+                } catch (e: Exception) {
+                    Log.e("TAG", e.message.toString())
+                }
+            }
+        }
+    }
+
+
+    private val requestLocationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                locationPermissionGranted = true
+            }
+        }
+
+    private fun checkLocationPermission(){
+        // Check if the location permission is granted
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            locationPermissionGranted = false
+            requestLocationPermissionLauncher.launch(
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+        } else {
+            locationPermissionGranted = true
+        }
+    }
+
+    private val requestNotificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                notificationPermissionGranted = true
+            }
+        }
+
+
+    private fun checkNotificationPermission(){
+
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationPermissionGranted = false
+                requestNotificationPermissionLauncher.launch(
+                    Manifest.permission.POST_NOTIFICATIONS
+                )
+            } else {
+                notificationPermissionGranted = true
+            }
+
+    }
+
+}

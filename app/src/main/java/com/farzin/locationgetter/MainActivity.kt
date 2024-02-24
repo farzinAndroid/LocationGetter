@@ -39,7 +39,6 @@ class MainActivity : ComponentActivity() {
     private var locationPermissionGranted by mutableStateOf(false)
     private var notificationPermissionGranted by mutableStateOf(false)
     private var locationSettingsEnabled by mutableStateOf(false)
-    private var isInternetOn by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,14 +52,12 @@ class MainActivity : ComponentActivity() {
                     checkLocationPermission()
                     checkNotificationPermission()
                     checkIfLocationIsEnabled()
-                    isInternetOn = checkInternet()
 
 
                     MainScreen(
                         isLocationPermissionGranted = locationPermissionGranted,
                         isLocationSettingsGranted = locationSettingsEnabled,
                         isNotificationPermissionGranted = notificationPermissionGranted,
-                        isInternetOn = isInternetOn
                     )
                 }
             }
@@ -152,8 +149,5 @@ class MainActivity : ComponentActivity() {
 
     }
 
-    private fun checkInternet(): Boolean {
-        return locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-    }
 
 }

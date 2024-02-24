@@ -27,14 +27,13 @@ fun MainScreen(
     isLocationPermissionGranted: Boolean,
     isNotificationPermissionGranted: Boolean,
     isLocationSettingsGranted: Boolean,
-    isInternetOn: Boolean,
     locationViewModel: LocationViewModel = hiltViewModel(),
 ) {
 
     var locationList by remember { mutableStateOf(emptyList<LocationModel>()) }
     val context = LocalContext.current
 
-    if (isLocationPermissionGranted && isLocationSettingsGranted && isNotificationPermissionGranted && isInternetOn) {
+    if (isLocationPermissionGranted && isLocationSettingsGranted && isNotificationPermissionGranted) {
 
         LaunchedEffect(true){
             locationViewModel.locationList.collectLatest {

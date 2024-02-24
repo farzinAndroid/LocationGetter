@@ -2,8 +2,8 @@ package com.farzin.locationgetter.di
 
 import android.app.NotificationManager
 import android.content.Context
+import android.location.LocationManager
 import com.farzin.locationgetter.data.location_service.LocationClient
-import com.farzin.locationgetter.data.location_service.LocationInterface
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
@@ -16,8 +16,6 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import java.util.concurrent.TimeUnit
-import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -39,11 +37,11 @@ object LocationModule {
     fun provideLocationClient(
         fusedLocationProviderClient: FusedLocationProviderClient,
         locationRequest: LocationRequest,
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        locationManager: LocationManager
     ) : LocationClient = LocationClient(
         fusedLocationProviderClient,
-        locationRequest,
-        context
+        locationRequest
     )
 
     @Provides
@@ -52,6 +50,11 @@ object LocationModule {
     @Provides
     fun provideNotificationManager(
         @ApplicationContext context: Context
-    ) = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    ) : NotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+    @Provides
+    fun provideLocationManager(
+        @ApplicationContext context: Context
+    ) : LocationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
 }

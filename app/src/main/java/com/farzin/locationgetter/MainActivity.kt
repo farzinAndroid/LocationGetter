@@ -3,14 +3,13 @@ package com.farzin.locationgetter
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
-import android.os.Build
+import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -25,20 +24,22 @@ import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.LocationSettingsRequest
-import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity: ComponentActivity() {
+class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var locationRequest: LocationRequest
 
+    @Inject
+    lateinit var locationManager: LocationManager
+
     private var locationPermissionGranted by mutableStateOf(false)
     private var notificationPermissionGranted by mutableStateOf(false)
     private var locationSettingsEnabled by mutableStateOf(false)
+    private var isInternetOn by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,12 +53,14 @@ class MainActivity: ComponentActivity() {
                     checkLocationPermission()
                     checkNotificationPermission()
                     checkIfLocationIsEnabled()
+                    isInternetOn = checkInternet()
 
 
                     MainScreen(
                         isLocationPermissionGranted = locationPermissionGranted,
                         isLocationSettingsGranted = locationSettingsEnabled,
-                        isNotificationPermissionGranted = notificationPermissionGranted
+                        isNotificationPermissionGranted = notificationPermissionGranted,
+                        isInternetOn = isInternetOn
                     )
                 }
             }
@@ -108,7 +111,7 @@ class MainActivity: ComponentActivity() {
             }
         }
 
-    private fun checkLocationPermission(){
+    private fun checkLocationPermission() {
         // Check if the location permission is granted
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -132,21 +135,25 @@ class MainActivity: ComponentActivity() {
         }
 
 
-    private fun checkNotificationPermission(){
+    private fun checkNotificationPermission() {
 
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                notificationPermissionGranted = false
-                requestNotificationPermissionLauncher.launch(
-                    Manifest.permission.POST_NOTIFICATIONS
-                )
-            } else {
-                notificationPermissionGranted = true
-            }
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionGranted = false
+            requestNotificationPermissionLauncher.launch(
+                Manifest.permission.POST_NOTIFICATIONS
+            )
+        } else {
+            notificationPermissionGranted = true
+        }
 
+    }
+
+    private fun checkInternet(): Boolean {
+        return locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }
 
 }

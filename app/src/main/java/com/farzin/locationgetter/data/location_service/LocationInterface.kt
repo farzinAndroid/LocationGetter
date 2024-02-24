@@ -8,6 +8,4 @@ interface LocationInterface {
 
     fun getLocationUpdates(interval:Long):  Flow<Location>
 
-    class LocationException(message:String):Exception()
-
 }

@@ -1,7 +1,6 @@
 package com.farzin.locationgetter.ui.screen
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,7 +17,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.farzin.locationgetter.data.model.LocationModel
 import com.farzin.locationgetter.viewmodels.LocationViewModel
-import com.google.android.gms.location.LocationRequest
 import kotlinx.coroutines.flow.collectLatest
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -29,13 +27,14 @@ fun MainScreen(
     isLocationPermissionGranted: Boolean,
     isNotificationPermissionGranted: Boolean,
     isLocationSettingsGranted: Boolean,
+    isInternetOn: Boolean,
     locationViewModel: LocationViewModel = hiltViewModel(),
 ) {
 
     var locationList by remember { mutableStateOf(emptyList<LocationModel>()) }
     val context = LocalContext.current
 
-    if (isLocationPermissionGranted && isLocationSettingsGranted && isNotificationPermissionGranted) {
+    if (isLocationPermissionGranted && isLocationSettingsGranted && isNotificationPermissionGranted && isInternetOn) {
 
         LaunchedEffect(true){
             locationViewModel.locationList.collectLatest {
@@ -62,12 +61,12 @@ fun MainScreen(
                 .fillMaxSize()
                 .padding(top = 12.dp)
         ) {
-            items(locationList) {
+            items(locationList.reversed()) {
                 LocationCard(locationModel = it)
             }
         }
 
     }else{
-        Log.e("TAG","error")
+        ErrorSection()
     }
 }
